@@ -110,16 +110,66 @@
 
     </section>
 
+    
     <section class="latest-posts">
 
         <h2>Latest transmissions</h2>
 
         <?php
-        $latest_posts = new WP_Query(array(
+        $categories = get_categories(array(
+            'hide_empty' => true,
+        ));
+
+        $selected_categories = isset($_GET['categories'])
+            ? array_map('absint', (array) $_GET['categories'])
+            : array();
+        ?>
+
+        <form method="GET" class="category-filter">
+
+            <h3>Filter by category</h3>
+
+            <?php foreach ($categories as $category) : ?>
+
+                <label>
+                    <input
+                        type="checkbox"
+                        name="categories[]"
+                        value="<?php echo esc_attr($category->term_id); ?>"
+                        <?php checked(
+                            in_array($category->term_id, $selected_categories)
+                        ); ?>
+                    >
+
+                    <?php echo esc_html($category->name); ?>
+
+                </label>
+
+            <?php endforeach; ?>
+
+            <div class="filter-button">
+
+                <button type="submit">
+                    Filter posts
+                </button>
+
+            </div>
+
+        </form>
+
+        <?php
+
+        $query_args = array(
             'post_type'      => 'post',
             'posts_per_page' => 3,
             'post_status'    => 'publish',
-        ));
+        );
+
+        if (!empty($selected_categories)) {
+            $query_args['category__in'] = $selected_categories;
+        }
+
+        $latest_posts = new WP_Query($query_args);
 
         if ($latest_posts->have_posts()) :
 
@@ -147,11 +197,12 @@
         else :
         ?>
 
-            <p>No messages are added.</p>
+            <p>No messages found in this category.</p>
 
         <?php endif; ?>
 
     </section>
+
 
 </main>
 
